@@ -50,6 +50,16 @@
   #skinBtn { margin-top:14px; display:flex; align-items:center; gap:10px; padding:6px 16px 6px 10px; border-radius:14px; border:0; background:var(--panel); color:#fff; font-family:inherit; font-size:16px; cursor:pointer; }
   #skinHint { font-size:13px; opacity:.7; margin-top:4px; min-height:1.2em; }
   #unlocks { list-style:none; padding:0; margin:6px 0 0; color:#9fe8ff; font-weight:700; }
+  .board { margin-top:12px; background:#0005; border-radius:14px; padding:8px 14px; min-width:min(320px, 100%); font-size:14px; }
+  .board h3 { margin:2px 0 6px; font-size:15px; color:var(--gold); }
+  .board ol { margin:0; padding:0; list-style:none; line-height:1.8; font-variant-numeric:tabular-nums; }
+  .board li { display:flex; justify-content:space-between; gap:12px; }
+  .board li.me { color:#9fe8ff; font-weight:700; }
+  #submitRow { display:flex; gap:8px; margin-top:10px; justify-content:center; flex-wrap:wrap; }
+  #playerName { font:inherit; font-size:16px; padding:8px 12px; border-radius:10px; border:2px solid #fff4; background:#0006; color:#fff; width:150px; text-align:center; }
+  #submitBtn { font:inherit; font-size:16px; font-weight:700; padding:8px 16px; border-radius:10px; border:0; background:#9fe8ff; color:#10202a; cursor:pointer; }
+  #submitBtn:disabled { opacity:.5; }
+  #submitMsg { font-size:13px; min-height:1.2em; margin:4px 0 0; }
   #scores { margin:8px 0 0; padding:0; list-style:none; font-size:16px; line-height:1.9; opacity:.9; font-variant-numeric:tabular-nums; }
   .hidden { display:none !important; }
   .legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:14px; }
@@ -78,6 +88,7 @@
   <button class="btn" id="play">ابدأ</button>
   <button id="skinBtn" type="button"><canvas id="skinPrev" width="48" height="48"></canvas><span id="skinName"></span></button>
   <p id="skinHint"></p>
+  <div class="board hidden" id="boardStart"><h3>🏆 الترتيب العالمي</h3><ol></ol></div>
   <p style="font-size:13px;opacity:.75"><a href="godot/" style="color:#ffd25e">نسخة محرك Godot</a> · <a href="oasis-falcon.apk" style="color:#ffd25e" download>تطبيق أندرويد (APK)</a></p>
   <p id="bestStart" style="font-size:14px;opacity:.75"></p>
 </div>
@@ -92,6 +103,11 @@
   <p id="overScore" style="font-size:22px"></p>
   <p id="overBest"></p>
   <ul id="unlocks"></ul>
+  <div id="submitBox" class="hidden">
+    <div id="submitRow"><input id="playerName" maxlength="16" placeholder="اسمك" autocomplete="nickname"><button id="submitBtn" type="button">أرسل نتيجتي</button></div>
+    <p id="submitMsg"></p>
+  </div>
+  <div class="board hidden" id="boardOver"><h3>🏆 الترتيب العالمي</h3><ol></ol></div>
   <ol id="scores"></ol>
   <button class="btn" id="again">العب مجدداً</button>
 </div>
@@ -691,6 +707,9 @@ function gameOver(title) {
   $('upgrade').classList.add('hidden');
   const before = unlockedSkins(totals); totals = mergeTotals(totals, S.stats); store.set('oasisFalconTotals', JSON.stringify(totals));
   const fresh = unlockedSkins(totals).filter(id => !before.includes(id));
+  lastRun = S.score > 0 ? { score: S.score, wave: S.wave, duration: Math.round(S.t * 10) / 10 } : null;
+  $('submitBox').classList.toggle('hidden', !(lastRun && $('submitBox').dataset.online));
+  $('submitBtn').disabled = false; $('submitMsg').textContent = ''; myRowId = null;
   $('unlocks').innerHTML = fresh.map(id => `<li>🔓 شكل جديد: ${SKINS[id][0]}</li>`).join('');
   renderSkin();
   $('overTitle').textContent = title;
@@ -707,6 +726,57 @@ function loadSkins() {
   if (!unlockedSkins(totals).includes(skin)) skin = 'classic';
 }
 loadSkins();
+/* ===== Global leaderboard (Supabase project "oasis-falcon") =====
+   Reads are public; writes go only through the submit_score() RPC, which rejects
+   implausible scores. The publishable key is meant to be public. Where the page
+   cannot reach the network (e.g. a sandboxed preview), the boards stay hidden. */
+const BOARD = { url: 'https://zlfaqmcvjwevnaxftjoh.supabase.co', key: 'sb_publishable_fbhUcGGnRZmjd3oZBdr55g_joNbTJ9U' };
+let lastRun = null, myRowId = null;
+async function boardFetch(path, opts = {}) {
+  const r = await fetch(BOARD.url + path, { ...opts, headers: { apikey: BOARD.key, 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const body = await r.json().catch(() => null);
+  if (!r.ok) throw new Error((body && body.message) || ('HTTP ' + r.status));
+  return body;
+}
+function renderBoard(el, rows) {
+  const ol = el.querySelector('ol'); ol.textContent = '';
+  rows.forEach((row, i) => {
+    const li = document.createElement('li'); if (row.id === myRowId) li.className = 'me';
+    const a = document.createElement('span'); a.textContent = (i + 1) + '. ' + row.name;   // textContent: names are untrusted
+    const b = document.createElement('span'); b.textContent = row.score + ' · م' + row.wave;
+    li.append(a, b); ol.appendChild(li);
+  });
+  el.classList.toggle('hidden', rows.length === 0);
+}
+async function loadBoards() {
+  try {
+    const rows = await boardFetch('/rest/v1/scores?select=id,name,score,wave&order=score.desc,created_at.asc&limit=10');
+    renderBoard($('boardStart'), rows); renderBoard($('boardOver'), rows);
+    return true;
+  } catch (e) { return false; }
+}
+const SUBMIT_ERRORS = { 'too many submissions': 'انتظر قليلاً قبل الإرسال مرة أخرى.', 'invalid name': 'اكتب اسماً من 1 إلى 16 حرفاً.' };
+async function submitScore() {
+  const name = $('playerName').value.trim();
+  if (!lastRun || !name) { $('submitMsg').textContent = 'اكتب اسمك أولاً.'; return; }
+  store.set('oasisFalconName', name);
+  $('submitBtn').disabled = true; $('submitMsg').textContent = 'جارٍ الإرسال…';
+  try {
+    myRowId = await boardFetch('/rest/v1/rpc/submit_score', { method: 'POST',
+      body: JSON.stringify({ p_name: name, p_score: lastRun.score, p_wave: lastRun.wave, p_duration: lastRun.duration }) });
+    lastRun = null;
+    const better = await boardFetch('/rest/v1/scores?select=id&score=gt.' + (await boardFetch('/rest/v1/scores?select=score&id=eq.' + myRowId))[0].score);
+    await loadBoards();  // refresh first, so the highlighted row is already there when the message appears
+    $('submitMsg').textContent = 'تم! ترتيبك العالمي: ' + (better.length + 1);
+  } catch (e) {
+    $('submitMsg').textContent = SUBMIT_ERRORS[e.message] || 'تعذّر الإرسال، حاول لاحقاً.';
+    $('submitBtn').disabled = false;
+  }
+}
+$('submitBtn').addEventListener('click', submitScore);
+$('playerName').value = store.get('oasisFalconName') || '';
+loadBoards().then(ok => { if (ok) $('submitBox').dataset.online = '1'; });
+
 function renderSkin() {
   const owned = unlockedSkins(totals);
   $('skinName').textContent = 'الشكل: ' + SKINS[skin][0] + (owned.length > 1 ? '  ◀' : '');
