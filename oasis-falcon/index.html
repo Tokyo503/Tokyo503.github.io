@@ -47,6 +47,7 @@
     background:var(--panel); color:#fff; font-family:inherit; cursor:pointer; text-align:center; }
   .upcard b { font-size:22px; } .upcard span { font-size:15px; opacity:.8; }
   .upcard:active { transform:scale(.98); }
+  #langBtn { position:absolute; top:max(14px, env(safe-area-inset-top)); inset-inline-end:max(16px, env(safe-area-inset-right)); font:inherit; font-size:15px; font-weight:700; padding:6px 14px; border-radius:20px; border:2px solid #fff5; background:#0005; color:#fff; cursor:pointer; }
   #skinBtn { margin-top:14px; display:flex; align-items:center; gap:10px; padding:6px 16px 6px 10px; border-radius:14px; border:0; background:var(--panel); color:#fff; font-family:inherit; font-size:16px; cursor:pointer; }
   #skinHint { font-size:13px; opacity:.7; margin-top:4px; min-height:1.2em; }
   #unlocks { list-style:none; padding:0; margin:6px 0 0; color:#9fe8ff; font-weight:700; }
@@ -70,46 +71,47 @@
 <canvas id="c"></canvas>
 <div id="hud" class="hidden">
   <div class="box" id="score">0</div>
-  <div class="box" id="wave">الموجة 1</div>
+  <div class="box" id="wave"></div>
   <div class="box">💧<span id="water"><span id="waterFill"></span></span></div>
   <div class="box" id="lives">🪶🪶🪶</div>
 </div>
-<div id="shieldPill" class="hidden">درع الريح <span id="shieldBar"></span></div>
-<button id="dive">انقضاض</button>
-<button id="mute" aria-label="الصوت">🔊</button>
+<div id="shieldPill" class="hidden"><span data-i18n="shield"></span> <span id="shieldBar"></span></div>
+<button id="dive" data-i18n="dive"></button>
+<button id="mute" data-i18n-label="sound">🔊</button>
 
 <div id="start" class="screen">
-  <h1>صقر الواحة</h1>
-  <p>أنت صقر يحرس واحة في قلب الصحراء. أسراب الجراد قادمة نحو الماء، فانقضّ عليها قبل أن تصل!</p>
+  <button id="langBtn" type="button" data-i18n="langSwitch"></button>
+  <h1 data-i18n="title"></h1>
+  <p data-i18n="intro"></p>
   <div class="legend">
-    <span>⬆️ ترقية مع كل موجة</span><span>🦗 الجراد: اصطده</span><span>👑 الجراد الملكي: ضربتان أو انقضاض</span><span>🌴 التمر الذهبي: نقاط وماء</span><span>💨 درع الريح: حماية من الزوابع</span><span>🌪️ الزوبعة: تجنّبها</span><span>👑 ملكة الجراد: انقضّ عليها</span>
+    <span data-i18n="lgUpgrade"></span><span data-i18n="lgLocust"></span><span data-i18n="lgRoyal"></span><span data-i18n="lgDate"></span><span data-i18n="lgShield"></span><span data-i18n="lgTornado"></span><span data-i18n="lgQueen"></span>
   </div>
-  <p style="font-size:14px;opacity:.8">اسحب بإصبعك للطيران، وزر «انقضاض» للاندفاع<br>على الكمبيوتر: الأسهم أو WASD، والمسافة للانقضاض</p>
-  <button class="btn" id="play">ابدأ</button>
+  <p style="font-size:14px;opacity:.8"><span data-i18n="howTouch"></span><br><span data-i18n="howKeys"></span></p>
+  <button class="btn" id="play" data-i18n="start"></button>
   <button id="skinBtn" type="button"><canvas id="skinPrev" width="48" height="48"></canvas><span id="skinName"></span></button>
   <p id="skinHint"></p>
-  <div class="board hidden" id="boardStart"><h3>🏆 الترتيب العالمي</h3><ol></ol></div>
-  <p style="font-size:13px;opacity:.75"><a href="godot/" style="color:#ffd25e">نسخة محرك Godot</a> · <a href="oasis-falcon.apk" style="color:#ffd25e" download>تطبيق أندرويد (APK)</a></p>
+  <div class="board hidden" id="boardStart"><h3 data-i18n="globalBoard"></h3><ol></ol></div>
+  <p style="font-size:13px;opacity:.75"><a href="godot/" style="color:#ffd25e">Godot</a> · <a href="privacy.html" style="color:#ffd25e">الخصوصية · Privacy</a> · <a href="oasis-falcon.apk" style="color:#ffd25e" download>Android (APK)</a></p>
   <p id="bestStart" style="font-size:14px;opacity:.75"></p>
 </div>
 
 <div id="upgrade" class="screen hidden">
-  <h1 style="font-size:clamp(32px,9vw,52px)">اختر ترقية</h1>
+  <h1 style="font-size:clamp(32px,9vw,52px)" data-i18n="chooseUpgrade"></h1>
   <div id="upChoices"></div>
 </div>
 
 <div id="over" class="screen hidden">
-  <h1 id="overTitle">جفّت الواحة</h1>
+  <h1 id="overTitle"></h1>
   <p id="overScore" style="font-size:22px"></p>
   <p id="overBest"></p>
   <ul id="unlocks"></ul>
   <div id="submitBox" class="hidden">
-    <div id="submitRow"><input id="playerName" maxlength="16" placeholder="اسمك" autocomplete="nickname"><button id="submitBtn" type="button">أرسل نتيجتي</button></div>
+    <div id="submitRow"><input id="playerName" maxlength="16" data-i18n-ph="yourName" autocomplete="nickname"><button id="submitBtn" type="button" data-i18n="submit"></button></div>
     <p id="submitMsg"></p>
   </div>
-  <div class="board hidden" id="boardOver"><h3>🏆 الترتيب العالمي</h3><ol></ol></div>
+  <div class="board hidden" id="boardOver"><h3 data-i18n="globalBoard"></h3><ol></ol></div>
   <ol id="scores"></ol>
-  <button class="btn" id="again">العب مجدداً</button>
+  <button class="btn" id="again" data-i18n="again"></button>
 </div>
 
 <script>
@@ -128,20 +130,54 @@ const CFG = {
   bossScore: 500, bossWaterReward: 30, bossDrain: 40, bossHitCd: 0.6, bossBounce: 420, bossDiveReach: 20, bossBlockCd: 0.3,
   upSpeedMult: 1.12, upDiveCdStep: 0.5, upDiveCdMin: 1.5, upClaws: 4, upSpring: 30, upDates: 3,
 };
-const UPGRADES = {
-  speed: ['أجنحة أسرع', 'سرعة الطيران +12%'], dive: ['انقضاض أسرع', 'يعود الانقضاض أسرع بنصف ثانية'],
-  claws: ['مخالب أوسع', 'مدى الاصطياد أكبر'], spring: ['نبع جديد', '+30 ماء للواحة'],
-  feather: ['ريشة إضافية', 'حياة إضافية'], dates: ['تمر مبارك', 'كل تمرة تعطي +3 ماء إضافي'],
+/* ===== Language (Arabic / English) ===== */
+const I18N = {
+  ar: {
+    title: 'صقر الواحة', langSwitch: 'English', sound: 'الصوت', dive: 'انقضاض', shield: 'درع الريح', wave: 'الموجة {0}',
+    intro: 'أنت صقر يحرس واحة في قلب الصحراء. أسراب الجراد قادمة نحو الماء، فانقضّ عليها قبل أن تصل!',
+    lgUpgrade: '⬆️ ترقية مع كل موجة', lgLocust: '🦗 الجراد: اصطده', lgRoyal: '👑 الجراد الملكي: ضربتان أو انقضاض', lgDate: '🌴 التمر الذهبي: نقاط وماء',
+    lgShield: '💨 درع الريح: حماية من الزوابع', lgTornado: '🌪️ الزوبعة: تجنّبها', lgQueen: '👑 ملكة الجراد: انقضّ عليها',
+    howTouch: 'اسحب بإصبعك للطيران، وزر «انقضاض» للاندفاع', howKeys: 'على الكمبيوتر: الأسهم أو WASD، والمسافة للانقضاض',
+    start: 'ابدأ', again: 'العب مجدداً', chooseUpgrade: 'اختر ترقية', globalBoard: '🏆 الترتيب العالمي', yourName: 'اسمك', submit: 'أرسل نتيجتي',
+    overDry: 'جفّت الواحة', overDown: 'سقط الصقر', overScore: 'النقاط: {0} — الموجة {1}', best: 'أفضل نتيجة: {0}', topLocal: 'أفضل النتائج',
+    topRow: '{0}. {1} — الموجة {2}', boardRow: '{0} · م{1}', newSkin: '🔓 شكل جديد: {0}', skinLabel: 'الشكل: {0}', unlockHint: 'افتح: {0} — {1}', allSkins: 'فتحت كل الأشكال!',
+    again2: 'مرة أخرى!', shieldGot: 'درع الريح!', queen: 'ملكة الجراد!', queenEscape: 'هربت الملكة! -{0}', queenKill: 'هزمت الملكة! +{0} ماء', queenBlock: 'انقضّ عليها!',
+    sending: 'جارٍ الإرسال…', sent: 'تم! ترتيبك العالمي: {0}', nameFirst: 'اكتب اسمك أولاً.', sendFail: 'تعذّر الإرسال، حاول لاحقاً.',
+    errRate: 'انتظر قليلاً قبل الإرسال مرة أخرى.', errName: 'اكتب اسماً من 1 إلى 16 حرفاً.', errBlocked: 'هذا الاسم غير مسموح، اختر اسماً آخر.',
+    stage0: 'النهار', stage1: 'الغروب', stage2: 'الليل',
+    up_speed: ['أجنحة أسرع', 'سرعة الطيران +12%'], up_dive: ['انقضاض أسرع', 'يعود الانقضاض أسرع بنصف ثانية'], up_claws: ['مخالب أوسع', 'مدى الاصطياد أكبر'],
+    up_spring: ['نبع جديد', '+30 ماء للواحة'], up_feather: ['ريشة إضافية', 'حياة إضافية'], up_dates: ['تمر مبارك', 'كل تمرة تعطي +3 ماء إضافي'],
+    sk_classic: ['الصقر الأصيل', 'متاح دائماً'], sk_golden: ['الصقر الذهبي', 'اصطد 100 جرادة (مجموع كل الجولات)'],
+    sk_night: ['صقر الليل', 'اصمد حتى الليل (الموجة 5)'], sk_royal: ['الصقر الملكي', 'اهزم ملكة الجراد'],
+  },
+  en: {
+    title: 'Oasis Falcon', langSwitch: 'العربية', sound: 'Sound', dive: 'Dive', shield: 'Wind shield', wave: 'Wave {0}',
+    intro: 'You are a falcon guarding a desert oasis. Locust swarms are heading for the water: dive on them before they reach it!',
+    lgUpgrade: '⬆️ An upgrade every wave', lgLocust: '🦗 Locust: catch it', lgRoyal: '👑 Royal locust: two hits or one dive', lgDate: '🌴 Golden date: points and water',
+    lgShield: '💨 Wind shield: tornado-proof', lgTornado: '🌪️ Tornado: avoid it', lgQueen: '👑 Locust queen: dive on her',
+    howTouch: 'Drag to fly, tap “Dive” to strike', howKeys: 'On a computer: arrows or WASD, Space to dive',
+    start: 'Play', again: 'Play again', chooseUpgrade: 'Choose an upgrade', globalBoard: '🏆 Global ranking', yourName: 'Your name', submit: 'Submit score',
+    overDry: 'The oasis ran dry', overDown: 'The falcon fell', overScore: 'Score: {0} — wave {1}', best: 'Best: {0}', topLocal: 'Your best runs',
+    topRow: '{0}. {1} — wave {2}', boardRow: '{0} · w{1}', newSkin: '🔓 New skin: {0}', skinLabel: 'Skin: {0}', unlockHint: 'Unlock {0}: {1}', allSkins: 'All skins unlocked!',
+    again2: 'Again!', shieldGot: 'Wind shield!', queen: 'Locust queen!', queenEscape: 'The queen escaped! -{0}', queenKill: 'Queen defeated! +{0} water', queenBlock: 'Dive on her!',
+    sending: 'Sending…', sent: 'Done! Global rank: {0}', nameFirst: 'Type your name first.', sendFail: 'Could not send, try again later.',
+    errRate: 'Wait a moment before sending again.', errName: 'Use a name of 1 to 16 characters.', errBlocked: 'That name is not allowed, pick another.',
+    stage0: 'Day', stage1: 'Sunset', stage2: 'Night',
+    up_speed: ['Faster wings', 'Flight speed +12%'], up_dive: ['Quicker dive', 'Dive recharges 0.5 s faster'], up_claws: ['Wider claws', 'Bigger catch range'],
+    up_spring: ['New spring', '+30 water for the oasis'], up_feather: ['Extra feather', 'One more life'], up_dates: ['Blessed dates', 'Each date gives +3 more water'],
+    sk_classic: ['Classic falcon', 'Always available'], sk_golden: ['Golden falcon', 'Catch 100 locusts (all runs combined)'],
+    sk_night: ['Night falcon', 'Survive until night (wave 5)'], sk_royal: ['Royal falcon', 'Defeat the locust queen'],
+  },
 };
+let LANG = 'ar';
+function t(key, ...args) { const v = (I18N[LANG] && I18N[LANG][key]) ?? I18N.ar[key] ?? key; return typeof v === 'string' ? v.replace(/\{(\d)\}/g, (_, i) => args[i]) : v; }
+const UPGRADES = { speed: 0, dive: 0, claws: 0, spring: 0, feather: 0, dates: 0 };  // ids; text lives in I18N (up_<id>)
+const upText = id => t('up_' + id);
 const STAGE_SKY = [['#f6b26b', '#eec07f', '#d98f4e'], ['#e2725b', '#e8a06a', '#b8643a'], ['#2c2a4a', '#4a4560', '#6b5a5a']];
-const STAGE_NAMES = ['النهار', 'الغروب', 'الليل'];
+const stageName = st => t('stage' + st);
 // Achievements unlock falcon skins (same rules as src/scripts/achievements.gd).
-const SKINS = {
-  classic: ['الصقر الأصيل', 'متاح دائماً', null],
-  golden: ['الصقر الذهبي', 'اصطد 100 جرادة (مجموع كل الجولات)', [255, 217, 89]],
-  night: ['صقر الليل', 'اصمد حتى الليل (الموجة 5)', [140, 158, 255]],
-  royal: ['الصقر الملكي', 'اهزم ملكة الجراد', [255, 128, 115]],
-};
+const SKINS = { classic: [null], golden: [[255, 217, 89]], night: [[140, 158, 255]], royal: [[255, 128, 115]] };  // tint; names in I18N (sk_<id>)
+const skinText = id => t('sk_' + id);
 const SKIN_ORDER = ['classic', 'golden', 'night', 'royal'];
 function unlockedSkins(t) {
   const out = ['classic'];
@@ -154,7 +190,7 @@ function mergeTotals(t, run) { return { kills: (t.kills || 0) + run.kills, bossK
 let totals = {}, skin = 'classic';  // loaded from storage once `store` exists (see loadSkins)
 const tintCache = {};
 function tinted(img, key) {  // multiply the sprite by the skin colour, keeping its alpha
-  const rgb = SKINS[key][2]; if (!rgb || !img.complete || !img.naturalWidth) return img;
+  const rgb = SKINS[key][0]; if (!rgb || !img.complete || !img.naturalWidth) return img;
   const id = key + img.src.length + img.src.slice(-24); if (tintCache[id]) return tintCache[id];
   const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
   const x = c.getContext('2d'); x.drawImage(img, 0, 0);
@@ -346,13 +382,13 @@ function applyUpgrade(id) {
   else if (id === 'dates') RUN.dateWater += CFG.upDates;
   S.taken.push(id); S.pending = false; S.choices = [];
   $('upgrade').classList.add('hidden');
-  floatText(S.falcon.x, S.falcon.y - 30, UPGRADES[id][0], '#9fe8ff'); SFX.shield();
+  floatText(S.falcon.x, S.falcon.y - 30, upText(id)[0], '#9fe8ff'); SFX.shield();
 }
 function showUpgrades() {
   const box = $('upChoices'); box.innerHTML = '';
   S.choices.forEach((id) => {
     const b = document.createElement('button'); b.className = 'upcard'; b.id = 'up-' + id;
-    b.innerHTML = '<b>' + UPGRADES[id][0] + '</b><span>' + UPGRADES[id][1] + '</span>';
+    const bt = document.createElement('b'), sp = document.createElement('span'); bt.textContent = upText(id)[0]; sp.textContent = upText(id)[1]; b.append(bt, sp);
     b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); applyUpgrade(id); });
     box.appendChild(b);
   });
@@ -368,10 +404,10 @@ function update(dt) {
     if (S.wave % CFG.tornadoEvery === 0) S.tornadoes.push(makeTornado());
     S.stats.maxWave = S.wave;
     if (S.wave % CFG.bossEvery === 0 && !S.boss) spawnBoss();
-    floatText(W / 2, H / 2 - 60, 'الموجة ' + S.wave, '#ffb24d'); SFX.wave();
+    floatText(W / 2, H / 2 - 60, t('wave', S.wave), '#ffb24d'); SFX.wave();
     if (RUN.upgradesEnabled) { S.choices = rollUpgrades(); S.pending = S.choices.length > 0; if (S.pending) showUpgrades(); }
   }
-  const st = stageFor(S.wave); if (st !== S.stage) { S.stage = st; floatText(W / 2, H / 2 - 100, STAGE_NAMES[st], '#fff3c4'); }
+  const st = stageFor(S.wave); if (st !== S.stage) { S.stage = st; floatText(W / 2, H / 2 - 100, stageName(st), '#fff3c4'); }
   if (S.comboT > 0) { S.comboT -= dt; if (S.comboT <= 0) S.combo = 1; }
   S.invuln = Math.max(0, S.invuln - dt);
   if (S.shield > 0) S.shield = Math.max(0, S.shield - dt);
@@ -431,7 +467,7 @@ function update(dt) {
         S.locusts.splice(i, 1); continue;
       }
       L.hitCd = 0.4; L.x -= ex / d * 40; L.y -= ey / d * 40;
-      burst(L.x, L.y, '#ff7a3d', 10, 140); floatText(L.x, L.y - 18, 'مرة أخرى!', '#ffb84d'); SFX.royalHit();
+      burst(L.x, L.y, '#ff7a3d', 10, 140); floatText(L.x, L.y - 18, t('again2'), '#ffb84d'); SFX.royalHit();
       continue;
     }
     if (d < CFG.oasisRadius - 8) {
@@ -459,7 +495,7 @@ function update(dt) {
   for (let i = S.shields.length - 1; i >= 0; i--) {
     const W2 = S.shields[i]; W2.life -= dt; W2.spin += dt * 4;
     if (dist(W2, f) < 16 + CFG.falconRadius + RUN.catchBonus) {
-      S.shield = CFG.shieldTime; burst(W2.x, W2.y, '#9fe8ff', 24, 200); floatText(W2.x, W2.y, 'درع الريح!', '#9fe8ff'); SFX.shield();
+      S.shield = CFG.shieldTime; burst(W2.x, W2.y, '#9fe8ff', 24, 200); floatText(W2.x, W2.y, t('shieldGot'), '#9fe8ff'); SFX.shield();
       S.shields.splice(i, 1);
     } else if (W2.life <= 0) S.shields.splice(i, 1);
   }
@@ -496,7 +532,7 @@ function update(dt) {
     const t = S.texts[i]; t.life -= dt * .9; t.y -= 40 * dt; if (t.life <= 0) S.texts.splice(i, 1);
   }
 
-  if (S.water <= 0 || S.lives <= 0) gameOver(S.water <= 0 ? 'جفّت الواحة' : 'سقط الصقر');
+  if (S.water <= 0 || S.lives <= 0) gameOver(S.water <= 0 ? t('overDry') : t('overDown'));
 }
 
 /* ===== Draw ===== */
@@ -592,7 +628,7 @@ function spawnBoss() {
   const o = oasis(), a = rand(0, 6.28);
   S.boss = { angle: a, orbit: CFG.bossOrbitStart, hp: CFG.bossHp, hitCd: 0, blockCd: 0, spawnT: CFG.bossSpawnInterval, wob: 0,
     x: o.x + Math.cos(a) * CFG.bossOrbitStart, y: o.y + Math.sin(a) * CFG.bossOrbitStart };
-  floatText(S.boss.x, S.boss.y - 40, 'ملكة الجراد!', '#ff9a6a'); S.shake = 8; SFX.royalHit();
+  floatText(S.boss.x, S.boss.y - 40, t('queen'), '#ff9a6a'); S.shake = 8; SFX.royalHit();
 }
 // The queen circles the oasis on a shrinking orbit and drops locusts. Only a dive hurts her.
 function updateBoss(dt, f, o) {
@@ -604,20 +640,20 @@ function updateBoss(dt, f, o) {
   if (B.spawnT <= 0) { B.spawnT = CFG.bossSpawnInterval; const L = makeLocust(); L.x = B.x; L.y = B.y; S.locusts.push(L); }
   if (B.orbit <= CFG.oasisRadius) {
     S.water = Math.max(0, S.water - CFG.bossDrain); burst(B.x, B.y, '#3fd1ff', 30, 200);
-    floatText(B.x, B.y, 'هربت الملكة! -' + CFG.bossDrain, '#7fdcff'); S.shake = 10; SFX.splash(); S.boss = null; return;
+    floatText(B.x, B.y, t('queenEscape', CFG.bossDrain), '#7fdcff'); S.shake = 10; SFX.splash(); S.boss = null; return;
   }
   const d = Math.max(0.001, dist(B, f)), reach = CFG.bossRadius + CFG.falconRadius + RUN.catchBonus;
   if (f.dive > 0 && d < reach + CFG.bossDiveReach && B.hitCd <= 0) {
     B.hitCd = CFG.bossHitCd; B.hp--;
     if (B.hp <= 0) {
       addScore(CFG.bossScore, B.x, B.y); S.water = Math.min(CFG.oasisWater, S.water + CFG.bossWaterReward); S.stats.bossKills++;
-      burst(B.x, B.y, '#ffd25e', 60, 320); floatText(B.x, B.y, 'هزمت الملكة! +' + CFG.bossWaterReward + ' ماء', '#ffd25e'); S.shake = 12; SFX.wave();
+      burst(B.x, B.y, '#ffd25e', 60, 320); floatText(B.x, B.y, t('queenKill', CFG.bossWaterReward), '#ffd25e'); S.shake = 12; SFX.wave();
       S.boss = null; return;
     }
     burst(B.x, B.y, '#ffb84d', 18, 200); floatText(B.x, B.y - 36, (CFG.bossHp - B.hp) + ' / ' + CFG.bossHp, '#ffd25e'); S.shake = 6; SFX.royalHit();
     f.vx = (f.x - B.x) / d * CFG.bossBounce; f.vy = (f.y - B.y) / d * CFG.bossBounce;
   } else if (f.dive <= 0 && d < reach && B.blockCd <= 0) {
-    B.blockCd = CFG.bossBlockCd; floatText(B.x, B.y - 36, 'انقضّ عليها!', '#ffffff');
+    B.blockCd = CFG.bossBlockCd; floatText(B.x, B.y - 36, t('queenBlock'), '#ffffff');
     f.vx = (f.x - B.x) / d * CFG.bossBounce; f.vy = (f.y - B.y) / d * CFG.bossBounce;
   }
 }
@@ -675,7 +711,7 @@ function draw(t) {
 /* ===== HUD ===== */
 function hud() {
   $('score').textContent = S.score + (S.combo > 1 ? '  ×' + S.combo : '');
-  $('wave').textContent = 'الموجة ' + S.wave;
+  $('wave').textContent = t('wave', S.wave);
   $('waterFill').style.width = (S.water / CFG.oasisWater * 100) + '%';
   $('lives').textContent = '🪶'.repeat(Math.max(0, S.lives)) || '—';
   $('dive').classList.toggle('cool', S.falcon.cd > 0);
@@ -692,7 +728,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 function start() {
-  SFX.init(); newGame(); SFX.music.start(); running = true;
+  logPlay('run'); SFX.init(); newGame(); SFX.music.start(); running = true;
   $('start').classList.add('hidden'); $('over').classList.add('hidden'); $('hud').classList.remove('hidden');
   if (matchMedia('(pointer:coarse)').matches) $('dive').style.display = 'flex';
 }
@@ -703,18 +739,18 @@ function gameOver(title) {
   store.set('oasisFalconTop', JSON.stringify(top));
   const best = Math.max(top[0].score, +(store.get('oasisFalconBest') || 0));
   store.set('oasisFalconBest', best);
-  $('scores').innerHTML = '<li style="color:var(--gold);font-weight:700">أفضل النتائج</li>' + top.map((e, i) => `<li>${i + 1}. ${e.score} — الموجة ${e.wave}</li>`).join('');
+  $('scores').innerHTML = '<li style="color:var(--gold);font-weight:700">' + t('topLocal') + '</li>' + top.map((e, i) => '<li>' + t('topRow', i + 1, e.score, e.wave) + '</li>').join('');
   $('upgrade').classList.add('hidden');
   const before = unlockedSkins(totals); totals = mergeTotals(totals, S.stats); store.set('oasisFalconTotals', JSON.stringify(totals));
   const fresh = unlockedSkins(totals).filter(id => !before.includes(id));
   lastRun = S.score > 0 ? { score: S.score, wave: S.wave, duration: Math.round(S.t * 10) / 10 } : null;
   $('submitBox').classList.toggle('hidden', !(lastRun && $('submitBox').dataset.online));
   $('submitBtn').disabled = false; $('submitMsg').textContent = ''; myRowId = null;
-  $('unlocks').innerHTML = fresh.map(id => `<li>🔓 شكل جديد: ${SKINS[id][0]}</li>`).join('');
+  $('unlocks').innerHTML = fresh.map(id => '<li>' + t('newSkin', skinText(id)[0]) + '</li>').join('');
   renderSkin();
   $('overTitle').textContent = title;
-  $('overScore').textContent = 'النقاط: ' + S.score + ' — الموجة ' + S.wave;
-  $('overBest').textContent = 'أفضل نتيجة: ' + best;
+  $('overScore').textContent = t('overScore', S.score, S.wave);
+  $('overBest').textContent = t('best', best);
   $('over').classList.remove('hidden'); $('hud').classList.add('hidden'); $('shieldPill').classList.add('hidden'); $('dive').style.display = 'none';
 }
 $('mute').textContent = SFX.muted ? '🔇' : '🔊';
@@ -743,7 +779,7 @@ function renderBoard(el, rows) {
   rows.forEach((row, i) => {
     const li = document.createElement('li'); if (row.id === myRowId) li.className = 'me';
     const a = document.createElement('span'); a.textContent = (i + 1) + '. ' + row.name;   // textContent: names are untrusted
-    const b = document.createElement('span'); b.textContent = row.score + ' · م' + row.wave;
+    const b = document.createElement('span'); b.textContent = t('boardRow', row.score, row.wave);
     li.append(a, b); ol.appendChild(li);
   });
   el.classList.toggle('hidden', rows.length === 0);
@@ -755,33 +791,39 @@ async function loadBoards() {
     return true;
   } catch (e) { return false; }
 }
-const SUBMIT_ERRORS = { 'too many submissions': 'انتظر قليلاً قبل الإرسال مرة أخرى.', 'invalid name': 'اكتب اسماً من 1 إلى 16 حرفاً.' };
+const SUBMIT_ERRORS = { 'too many submissions': 'errRate', 'invalid name': 'errName', 'name not allowed': 'errBlocked' };
 async function submitScore() {
   const name = $('playerName').value.trim();
-  if (!lastRun || !name) { $('submitMsg').textContent = 'اكتب اسمك أولاً.'; return; }
+  if (!lastRun || !name) { $('submitMsg').textContent = t('nameFirst'); return; }
   store.set('oasisFalconName', name);
-  $('submitBtn').disabled = true; $('submitMsg').textContent = 'جارٍ الإرسال…';
+  $('submitBtn').disabled = true; $('submitMsg').textContent = t('sending');
   try {
     myRowId = await boardFetch('/rest/v1/rpc/submit_score', { method: 'POST',
       body: JSON.stringify({ p_name: name, p_score: lastRun.score, p_wave: lastRun.wave, p_duration: lastRun.duration }) });
     lastRun = null;
     const better = await boardFetch('/rest/v1/scores?select=id&score=gt.' + (await boardFetch('/rest/v1/scores?select=score&id=eq.' + myRowId))[0].score);
     await loadBoards();  // refresh first, so the highlighted row is already there when the message appears
-    $('submitMsg').textContent = 'تم! ترتيبك العالمي: ' + (better.length + 1);
+    $('submitMsg').textContent = t('sent', better.length + 1);
   } catch (e) {
-    $('submitMsg').textContent = SUBMIT_ERRORS[e.message] || 'تعذّر الإرسال، حاول لاحقاً.';
+    $('submitMsg').textContent = t(SUBMIT_ERRORS[e.message] || 'sendFail');
     $('submitBtn').disabled = false;
   }
 }
 $('submitBtn').addEventListener('click', submitScore);
 $('playerName').value = store.get('oasisFalconName') || '';
 loadBoards().then(ok => { if (ok) $('submitBox').dataset.online = '1'; });
+// Anonymous play counter (no personal data): one 'visit' per page load, one 'run' per game started.
+function logPlay(kind) {
+  try { fetch(BOARD.url + '/rest/v1/rpc/log_play', { method: 'POST', keepalive: true,
+    headers: { apikey: BOARD.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_kind: kind, p_build: 'web' }) }).catch(() => {}); } catch (e) {}
+}
+logPlay('visit');
 
 function renderSkin() {
   const owned = unlockedSkins(totals);
-  $('skinName').textContent = 'الشكل: ' + SKINS[skin][0] + (owned.length > 1 ? '  ◀' : '');
+  $('skinName').textContent = t('skinLabel', skinText(skin)[0]) + (owned.length > 1 ? (LANG === 'ar' ? '  ◀' : '  ▶') : '');
   const locked = SKIN_ORDER.filter(id => !owned.includes(id));
-  $('skinHint').textContent = locked.length ? 'افتح: ' + SKINS[locked[0]][0] + ' — ' + SKINS[locked[0]][1] : 'فتحت كل الأشكال!';
+  $('skinHint').textContent = locked.length ? t('unlockHint', skinText(locked[0])[0], skinText(locked[0])[1]) : t('allSkins');
   const c = $('skinPrev').getContext('2d'); c.clearRect(0, 0, 48, 48);
   if (falconImgs[0].complete) c.drawImage(tinted(falconImgs[0], skin), 0, 0, 48, 48);
 }
@@ -790,7 +832,17 @@ $('skinBtn').addEventListener('click', () => {
   store.set('oasisFalconSkin', skin); renderSkin();
 });
 falconImgs[0].addEventListener('load', renderSkin); renderSkin();
-const best0 = store.get('oasisFalconBest'); if (best0) $('bestStart').textContent = 'أفضل نتيجة: ' + best0;
+function applyLang(lang) {
+  LANG = lang === 'en' ? 'en' : 'ar'; store.set('oasisFalconLang', LANG);
+  document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nLabel)); });
+  renderSkin(); renderBest0(); if (S) $('wave').textContent = t('wave', S.wave);
+}
+$('langBtn').addEventListener('click', () => applyLang(LANG === 'ar' ? 'en' : 'ar'));
+const best0 = store.get('oasisFalconBest'); const renderBest0 = () => { if (best0) $('bestStart').textContent = t('best', best0); }; renderBest0();
 
 /* ===== Input ===== */
 addEventListener('keydown', e => {
@@ -808,6 +860,7 @@ cv.addEventListener('pointermove', e => { if (pointer.active || e.pointerType ==
 addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') pointer.active = false; });
 $('dive').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); tryDive(); });
 
+applyLang(store.get('oasisFalconLang') || ((navigator.language || 'ar').toLowerCase().startsWith('ar') ? 'ar' : 'en'));
 requestAnimationFrame(frame);
 </script>
 <script>
