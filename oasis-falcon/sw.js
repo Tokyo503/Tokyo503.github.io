@@ -1,5 +1,5 @@
 // Offline cache for the HTML5 game (the 40 MB Godot build is not cached).
-const CACHE = 'oasis-falcon-d4693d4665';
+const CACHE = 'oasis-falcon-cc9e0aff08';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon_192.png', 'icons/icon_512.png', 'icons/icon_512_maskable.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
