@@ -30,10 +30,13 @@
   #dive.cool { filter:grayscale(.8) brightness(.7); }
   .screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:safe center; overflow-y:auto; text-align:center;
     background:radial-gradient(ellipse at center, rgba(40,18,30,.55), rgba(20,8,18,.88)); padding:16px; box-sizing:border-box; }
+  #start h1 { margin-top:44px; }  /* clear the language button on short screens */
+  body:not(.playing) #mute { display:none; }  /* sound control only during play: it covered the daily button */
   .screen h1 { font-size:clamp(40px, 11vw, 72px); margin:0 0 6px; color:var(--gold); text-shadow:0 4px 0 #8a3b12, 0 8px 22px #000a; }
   .screen p { max-width:460px; line-height:1.7; margin:6px 0; font-size:16px; opacity:.95; }
   .btn { margin-top:18px; font-size:22px; font-weight:800; padding:14px 42px; border-radius:16px; border:0; color:var(--ink);
     background:linear-gradient(#ffe08a,#f2a33a); box-shadow:0 6px 0 #9a4f12, 0 10px 24px #0008; cursor:pointer; font-family:inherit; }
+  .btn2 { margin-top:10px; font-size:17px; padding:10px 22px; background:#9fe8ff; box-shadow:0 6px 0 #3a7f99; }
   .btn:active { transform:translateY(4px); box-shadow:0 2px 0 #9a4f12; }
   #mute { position:fixed; bottom:max(24px, env(safe-area-inset-bottom)); right:max(16px, env(safe-area-inset-right)); width:48px; height:48px;
     border-radius:50%; border:2px solid #fff6; background:var(--panel); color:#fff; font-size:22px; z-index:5; }
@@ -65,6 +68,14 @@
   .hidden { display:none !important; }
   .legend { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:10px; font-size:14px; }
   .legend span { background:#0005; padding:6px 10px; border-radius:10px; }
+  @media (max-height: 700px) {  /* short phones: keep Play and the daily challenge on the first screen */
+    .legend { gap:6px 8px; margin-top:4px; font-size:12.5px; }
+    .legend span { padding:4px 8px; }
+    #start h1 { margin-top:40px; font-size:clamp(36px, 10vw, 56px); }
+    #start > p { margin:6px 0; font-size:14px; }
+    #start .btn { margin-top:10px; padding:10px 36px; }
+    #start .btn2 { margin-top:8px; padding:8px 18px; }
+  }
 </style>
 </head>
 <body>
@@ -84,10 +95,11 @@
   <h1 data-i18n="title"></h1>
   <p data-i18n="intro"></p>
   <div class="legend">
-    <span data-i18n="lgUpgrade"></span><span data-i18n="lgLocust"></span><span data-i18n="lgRoyal"></span><span data-i18n="lgDate"></span><span data-i18n="lgShield"></span><span data-i18n="lgTornado"></span><span data-i18n="lgQueen"></span>
+    <span data-i18n="lgUpgrade"></span><span data-i18n="lgLocust"></span><span data-i18n="lgRoyal"></span><span data-i18n="lgDate"></span><span data-i18n="lgShield"></span><span data-i18n="lgTornado"></span><span data-i18n="lgScorpion"></span><span data-i18n="lgQueen"></span>
   </div>
   <p style="font-size:14px;opacity:.8"><span data-i18n="howTouch"></span><br><span data-i18n="howKeys"></span></p>
   <button class="btn" id="play" data-i18n="start"></button>
+  <button class="btn btn2" id="dailyBtn" type="button"></button>
   <button id="skinBtn" type="button"><canvas id="skinPrev" width="48" height="48"></canvas><span id="skinName"></span></button>
   <p id="skinHint"></p>
   <div class="board hidden" id="boardStart"><h3 data-i18n="globalBoard"></h3><ol></ol></div>
@@ -112,6 +124,7 @@
   <div class="board hidden" id="boardOver"><h3 data-i18n="globalBoard"></h3><ol></ol></div>
   <ol id="scores"></ol>
   <button class="btn" id="again" data-i18n="again"></button>
+  <button class="btn btn2" id="shareBtn" type="button" data-i18n="share"></button>
 </div>
 
 <script>
@@ -128,6 +141,8 @@ const CFG = {
   upgradesEnabled: true, catchBonus: 0, maxLives: 5, sunsetWave: 3, nightWave: 5,
   bossEvery: 5, bossHp: 3, bossRadius: 26, bossOrbitStart: 190, bossOrbitShrink: 2.5, bossOrbitSpeed: 0.55, bossSpawnInterval: 5,
   bossScore: 500, bossWaterReward: 30, bossDrain: 40, bossHitCd: 0.6, bossBounce: 420, bossDiveReach: 20, bossBlockCd: 0.3,
+  tornadoSafeWaves: 1, scorpionFromWave: 4, scorpionInterval: 13, scorpionMax: 2, scorpionRingStart: 170, scorpionStep: 40, scorpionBuried: 1.4,
+  scorpionUp: 2.0, scorpionRadius: 13, scorpionScore: 40, scorpionDamage: 15,
   upSpeedMult: 1.12, upDiveCdStep: 0.5, upDiveCdMin: 1.5, upClaws: 4, upSpring: 30, upDates: 3,
 };
 /* ===== Language (Arabic / English) ===== */
@@ -136,9 +151,9 @@ const I18N = {
     title: 'صقر الواحة', langSwitch: 'English', sound: 'الصوت', dive: 'انقضاض', shield: 'درع الريح', wave: 'الموجة {0}',
     intro: 'أنت صقر يحرس واحة في قلب الصحراء. أسراب الجراد قادمة نحو الماء، فانقضّ عليها قبل أن تصل!',
     lgUpgrade: '⬆️ ترقية مع كل موجة', lgLocust: '🦗 الجراد: اصطده', lgRoyal: '👑 الجراد الملكي: ضربتان أو انقضاض', lgDate: '🌴 التمر الذهبي: نقاط وماء',
-    lgShield: '💨 درع الريح: حماية من الزوابع', lgTornado: '🌪️ الزوبعة: تجنّبها', lgQueen: '👑 ملكة الجراد: انقضّ عليها',
+    lgShield: '💨 درع الريح: حماية من الزوابع', lgTornado: '🌪️ الزوبعة: تجنّبها', lgQueen: '👑 ملكة الجراد: انقضّ عليها', lgScorpion: '🦂 عقرب الرمل: اضربه وهو طالع', sting: 'لدغة! -{0}', tornadoWarn: 'انتبه للزوبعة!',
     howTouch: 'اسحب بإصبعك للطيران، وزر «انقضاض» للاندفاع', howKeys: 'على الكمبيوتر: الأسهم أو WASD، والمسافة للانقضاض',
-    start: 'ابدأ', again: 'العب مجدداً', chooseUpgrade: 'اختر ترقية', globalBoard: '🏆 الترتيب العالمي', yourName: 'اسمك', submit: 'أرسل نتيجتي',
+    start: 'ابدأ', again: 'العب مجدداً', chooseUpgrade: 'اختر ترقية', globalBoard: '🏆 الترتيب العالمي', share: '📸 شارك نتيجتك', shareBeat: 'تقدر تغلبني؟', shareText: 'جبت {0} نقطة في صقر الواحة 🦅 تقدر تغلبني؟', daily: '🗓️ تحدي اليوم: {0}', dailyTitle: 'تحدي اليوم', dailyBoard: '🗓️ ترتيب اليوم: {0}', tw_tornado: 'يوم الزوابع', tw_royal: 'يوم الجراد الملكي', tw_scorpion: 'يوم العقارب', tw_dates: 'مطر التمر', tw_queen: 'الملكة تبكّر', tw_swift: 'يوم السرعة', yourName: 'اسمك', submit: 'أرسل نتيجتي',
     overDry: 'جفّت الواحة', overDown: 'سقط الصقر', overScore: 'النقاط: {0} — الموجة {1}', best: 'أفضل نتيجة: {0}', topLocal: 'أفضل النتائج',
     topRow: '{0}. {1} — الموجة {2}', boardRow: '{0} · م{1}', newSkin: '🔓 شكل جديد: {0}', skinLabel: 'الشكل: {0}', unlockHint: 'افتح: {0} — {1}', allSkins: 'فتحت كل الأشكال!',
     again2: 'مرة أخرى!', shieldGot: 'درع الريح!', queen: 'ملكة الجراد!', queenEscape: 'هربت الملكة! -{0}', queenKill: 'هزمت الملكة! +{0} ماء', queenBlock: 'انقضّ عليها!',
@@ -154,9 +169,9 @@ const I18N = {
     title: 'Oasis Falcon', langSwitch: 'العربية', sound: 'Sound', dive: 'Dive', shield: 'Wind shield', wave: 'Wave {0}',
     intro: 'You are a falcon guarding a desert oasis. Locust swarms are heading for the water: dive on them before they reach it!',
     lgUpgrade: '⬆️ An upgrade every wave', lgLocust: '🦗 Locust: catch it', lgRoyal: '👑 Royal locust: two hits or one dive', lgDate: '🌴 Golden date: points and water',
-    lgShield: '💨 Wind shield: tornado-proof', lgTornado: '🌪️ Tornado: avoid it', lgQueen: '👑 Locust queen: dive on her',
+    lgShield: '💨 Wind shield: tornado-proof', lgTornado: '🌪️ Tornado: avoid it', lgQueen: '👑 Locust queen: dive on her', lgScorpion: '🦂 Sand scorpion: hit it while it\'s up', sting: 'Sting! -{0}', tornadoWarn: 'Watch the tornado!',
     howTouch: 'Drag to fly, tap “Dive” to strike', howKeys: 'On a computer: arrows or WASD, Space to dive',
-    start: 'Play', again: 'Play again', chooseUpgrade: 'Choose an upgrade', globalBoard: '🏆 Global ranking', yourName: 'Your name', submit: 'Submit score',
+    start: 'Play', again: 'Play again', chooseUpgrade: 'Choose an upgrade', globalBoard: '🏆 Global ranking', share: '📸 Share your score', shareBeat: 'Can you beat me?', shareText: 'I scored {0} in Oasis Falcon 🦅 Can you beat me?', daily: '🗓️ Daily challenge: {0}', dailyTitle: 'Daily challenge', dailyBoard: '🗓️ Today: {0}', tw_tornado: 'Tornado day', tw_royal: 'Royal day', tw_scorpion: 'Scorpion day', tw_dates: 'Date rain', tw_queen: 'Early queen', tw_swift: 'Swift day', yourName: 'Your name', submit: 'Submit score',
     overDry: 'The oasis ran dry', overDown: 'The falcon fell', overScore: 'Score: {0} — wave {1}', best: 'Best: {0}', topLocal: 'Your best runs',
     topRow: '{0}. {1} — wave {2}', boardRow: '{0} · w{1}', newSkin: '🔓 New skin: {0}', skinLabel: 'Skin: {0}', unlockHint: 'Unlock {0}: {1}', allSkins: 'All skins unlocked!',
     again2: 'Again!', shieldGot: 'Wind shield!', queen: 'Locust queen!', queenEscape: 'The queen escaped! -{0}', queenKill: 'Queen defeated! +{0} water', queenBlock: 'Dive on her!',
@@ -203,6 +218,22 @@ const FALCON_SRC = ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAA
 const falconImgs = FALCON_SRC.map(u => { const i = new Image(); i.src = u; return i; });
 const falconDiveImg = Object.assign(new Image(), { src: FALCON_DIVE_SRC });
 let RUN = null; // per-run copy of CFG (upgrades modify it)
+const BASE_CFG = JSON.parse(JSON.stringify(CFG));
+/* Daily challenge: one seed and one twist per UTC day, the same for everyone.
+   Keep in step with daily_challenge.gd (Godot). */
+const DAILY_TWISTS = [
+  { id: 'tornado', cfg: { tornadoEvery: 1 } },
+  { id: 'royal', cfg: { royalFromWave: 1, royalChance: 0.35 } },
+  { id: 'scorpion', cfg: { scorpionFromWave: 2, scorpionMax: 3 } },
+  { id: 'dates', cfg: { dateInterval: 1.8, dateWater: 8 } },
+  { id: 'queen', cfg: { bossEvery: 3 } },
+  { id: 'swift', cfg: { locustBase: { speed: 65, interval: 1.3 }, falconSpeed: 370 } },
+];
+function dailyInfo(now = new Date()) {
+  const day = now.toISOString().slice(0, 10), n = Math.floor(Date.parse(day) / 86400000);
+  return { day, seed: (n * 7919 + 17) >>> 0, twist: DAILY_TWISTS[n % DAILY_TWISTS.length] };
+}
+let DAILY = null;  // dailyInfo() of the run in progress, or null for a normal run
 
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
@@ -216,6 +247,14 @@ addEventListener('resize', resize); resize();
 
 const $ = id => document.getElementById(id);
 const rand = (a, b) => a + Math.random() * (b - a);
+/* Gameplay randomness (spawns, upgrades, drift) goes through gameRandom so the daily
+   challenge can seed it; particles and screen shake keep Math.random. */
+let gameRandom = () => Math.random();
+const grand = (a, b) => a + gameRandom() * (b - a);
+function seededRandom(seed) {  // mulberry32
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
                 set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
@@ -233,7 +272,8 @@ function newGame() {
     falcon: { x: W / 2, y: H / 2 - 140, vx: 0, vy: 0, ang: 0, flap: 0, dive: 0, cd: 0 },
     locusts: [], dates: [], tornadoes: [], parts: [], texts: [], shields: [], shield: 0, shieldT: CFG.shieldInterval,
     pending: false, choices: [], taken: [], stage: 0, boss: null,
-    stats: { kills: 0, bossKills: 0, maxWave: 1 },
+    scorpions: [], scorpionT: CFG.scorpionInterval * 0.5,
+    stats: { kills: 0, bossKills: 0, scorpionKills: 0, maxWave: 1 },
     locustT: 1, dateT: 1.5,
   };
   S.tornadoes.push(makeTornado());
@@ -241,30 +281,30 @@ function newGame() {
 const oasis = () => ({ x: W / 2, y: H / 2 + 30 });
 
 function edgePoint() {
-  const side = Math.floor(Math.random() * 4), m = 30;
-  if (side === 0) return { x: rand(0, W), y: -m };
-  if (side === 1) return { x: W + m, y: rand(0, H) };
-  if (side === 2) return { x: rand(0, W), y: H + m };
-  return { x: -m, y: rand(0, H) };
+  const side = Math.floor(gameRandom() * 4), m = 30;
+  if (side === 0) return { x: grand(0, W), y: -m };
+  if (side === 1) return { x: W + m, y: grand(0, H) };
+  if (side === 2) return { x: grand(0, W), y: H + m };
+  return { x: -m, y: grand(0, H) };
 }
 function makeLocust(royal = false) {
   const p = edgePoint();
-  let sp = CFG.locustBase.speed * Math.pow(CFG.waveSpeedUp, S.wave - 1) * rand(0.85, 1.2);
+  let sp = CFG.locustBase.speed * Math.pow(CFG.waveSpeedUp, S.wave - 1) * grand(0.85, 1.2);
   if (royal) sp *= CFG.royalSpeedMult;
-  return { ...p, sp, wob: rand(0, 6.28), r: royal ? CFG.royalRadius : 9, royal, hp: royal ? CFG.royalHp : 1, hitCd: 0 };
+  return { ...p, sp, wob: grand(0, 6.28), r: royal ? CFG.royalRadius : 9, royal, hp: royal ? CFG.royalHp : 1, hitCd: 0 };
 }
 function makeTornado() {
   const o = oasis();
   let x, y;
-  do { x = rand(40, W - 40); y = rand(90, H - 40); } while (Math.hypot(x - o.x, y - o.y) < 150 || Math.hypot(x - W/2, y - (H/2 - 140)) < 120);
-  const a = rand(0, 6.28);
+  do { x = grand(40, W - 40); y = grand(90, H - 40); } while (Math.hypot(x - o.x, y - o.y) < 150 || Math.hypot(x - W/2, y - (H/2 - 140)) < 120);
+  const a = grand(0, 6.28);
   return { x, y, vx: Math.cos(a) * CFG.tornadoSpeed, vy: Math.sin(a) * CFG.tornadoSpeed, r: CFG.tornadoRadius, spin: 0 };
 }
 function makeDate() {
   const o = oasis();
   let x, y;
-  do { x = rand(40, W - 40); y = rand(100, H - 60); } while (Math.hypot(x - o.x, y - o.y) < CFG.oasisRadius + 30);
-  return { x, y, life: CFG.dateLife, bob: rand(0, 6.28) };
+  do { x = grand(40, W - 40); y = grand(100, H - 60); } while (Math.hypot(x - o.x, y - o.y) < CFG.oasisRadius + 30);
+  return { x, y, life: CFG.dateLife, bob: grand(0, 6.28) };
 }
 
 function burst(x, y, color, n = 12, sp = 160) {
@@ -291,6 +331,8 @@ function tryDive() {
   burst(f.x, f.y, '#fff3c4', 10, 120); SFX.dive();
 }
 
+/* Short vibration on phones that support it (Android browsers; iOS Safari ignores it). */
+function haptic(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
 /* ===== Sound (procedural Web Audio, no assets) ===== */
 const SFX = (() => {
   let ac = null, muted = store.get('oasisFalconMute') === '1', master = null;
@@ -370,7 +412,7 @@ const SFX = (() => {
 function stageFor(wave) { return wave >= CFG.nightWave ? 2 : wave >= CFG.sunsetWave ? 1 : 0; }
 function rollUpgrades() {
   const pool = Object.keys(UPGRADES).filter(id => !(id === 'feather' && S.lives >= CFG.maxLives) && !(id === 'dive' && RUN.diveCooldown <= CFG.upDiveCdMin));
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(gameRandom() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   return pool.slice(0, 3);
 }
 function applyUpgrade(id) {
@@ -439,14 +481,14 @@ function update(dt) {
   if (S.locustT <= 0) {
     const n = 1 + Math.floor((S.wave - 1) / CFG.swarmEvery);
     for (let i = 0; i < n; i++) S.locusts.push(makeLocust());
-    if (S.wave >= CFG.royalFromWave && Math.random() < CFG.royalChance) S.locusts.push(makeLocust(true));
-    S.locustT = CFG.locustBase.interval * Math.pow(CFG.waveRateUp, S.wave - 1) * rand(0.7, 1.3);
+    if (S.wave >= CFG.royalFromWave && gameRandom() < CFG.royalChance) S.locusts.push(makeLocust(true));
+    S.locustT = CFG.locustBase.interval * Math.pow(CFG.waveRateUp, S.wave - 1) * grand(0.7, 1.3);
   }
   S.dateT -= dt;
-  if (S.dateT <= 0 && S.dates.length < 3) { S.dates.push(makeDate()); S.dateT = CFG.dateInterval * rand(.7, 1.3); }
+  if (S.dateT <= 0 && S.dates.length < 3) { S.dates.push(makeDate()); S.dateT = CFG.dateInterval * grand(.7, 1.3); }
   if (S.wave >= CFG.shieldFromWave && !S.shields.length && S.shield <= 0) {
     S.shieldT -= dt;
-    if (S.shieldT <= 0) { const d = makeDate(); S.shields.push({ x: d.x, y: d.y, life: CFG.shieldLife, spin: 0 }); S.shieldT = CFG.shieldInterval * rand(.8, 1.2); }
+    if (S.shieldT <= 0) { const d = makeDate(); S.shields.push({ x: d.x, y: d.y, life: CFG.shieldLife, spin: 0 }); S.shieldT = CFG.shieldInterval * grand(.8, 1.2); }
   }
 
   // Locusts
@@ -472,13 +514,14 @@ function update(dt) {
     }
     if (d < CFG.oasisRadius - 8) {
       const dmg = L.royal ? CFG.royalDamage : CFG.locustDamage;
-      S.water = Math.max(0, S.water - dmg); S.shake = 6; SFX.splash();
+      S.water = Math.max(0, S.water - dmg); S.shake = 6; SFX.splash(); haptic(30);
       burst(L.x, L.y, '#3fd1ff', 14, 120); floatText(L.x, L.y, '-' + dmg + '💧', '#7fdcff');
       S.locusts.splice(i, 1);
     }
   }
 
   updateBoss(dt, f, o);
+  updateScorpions(dt, f, o);
 
   // Dates
   for (let i = S.dates.length - 1; i >= 0; i--) {
@@ -503,7 +546,7 @@ function update(dt) {
   // Tornadoes
   for (const T of S.tornadoes) {
     T.spin += dt * 9;
-    T.vx += rand(-60, 60) * dt; T.vy += rand(-60, 60) * dt;
+    T.vx += grand(-60, 60) * dt; T.vy += grand(-60, 60) * dt;
     const sp = Math.hypot(T.vx, T.vy), mx = CFG.tornadoSpeed * (1 + (S.wave - 1) * 0.06);
     if (sp > mx) { T.vx *= mx / sp; T.vy *= mx / sp; }
     T.x += T.vx * dt; T.y += T.vy * dt;
@@ -517,8 +560,10 @@ function update(dt) {
     if (S.shield > 0 && fd < T.r + CFG.falconRadius + 30) { T.vx += (T.x - f.x) / fd * 1500 * dt; T.vy += (T.y - f.y) / fd * 1500 * dt; }
     else if (f.dive > 0 && fd < 140) { T.vx += (T.x - f.x) / fd * 900 * dt; T.vy += (T.y - f.y) / fd * 900 * dt; }
     else if (fd < T.r + CFG.falconRadius - 4 && S.invuln <= 0) {
-      S.lives--; S.invuln = CFG.invulnTime; S.shake = 10; S.combo = 1; S.comboT = 0; SFX.hit();
-      burst(f.x, f.y, '#e8c08a', 22, 220); floatText(f.x, f.y - 20, '-🪶', '#ffb0a0');
+      if (S.wave <= CFG.tornadoSafeWaves) {  // learning wave: a touch only throws the falcon back and warns
+        S.invuln = CFG.invulnTime; S.shake = 4; SFX.hit(); haptic(40); floatText(f.x, f.y - 24, t('tornadoWarn'), '#ffe08a');
+      } else { S.lives--; S.invuln = CFG.invulnTime; S.shake = 10; S.combo = 1; S.comboT = 0; SFX.hit(); haptic(80); floatText(f.x, f.y - 20, '-🪶', '#ffb0a0'); }
+      burst(f.x, f.y, '#e8c08a', 22, 220);
       f.vx = (f.x - T.x) / fd * 500; f.vy = (f.y - T.y) / fd * 500;
     }
   }
@@ -625,7 +670,7 @@ function drawDate(D) {
   ctx.globalAlpha = 1;
 }
 function spawnBoss() {
-  const o = oasis(), a = rand(0, 6.28);
+  const o = oasis(), a = grand(0, 6.28);
   S.boss = { angle: a, orbit: CFG.bossOrbitStart, hp: CFG.bossHp, hitCd: 0, blockCd: 0, spawnT: CFG.bossSpawnInterval, wob: 0,
     x: o.x + Math.cos(a) * CFG.bossOrbitStart, y: o.y + Math.sin(a) * CFG.bossOrbitStart };
   floatText(S.boss.x, S.boss.y - 40, t('queen'), '#ff9a6a'); S.shake = 8; SFX.royalHit();
@@ -647,15 +692,76 @@ function updateBoss(dt, f, o) {
     B.hitCd = CFG.bossHitCd; B.hp--;
     if (B.hp <= 0) {
       addScore(CFG.bossScore, B.x, B.y); S.water = Math.min(CFG.oasisWater, S.water + CFG.bossWaterReward); S.stats.bossKills++;
-      burst(B.x, B.y, '#ffd25e', 60, 320); floatText(B.x, B.y, t('queenKill', CFG.bossWaterReward), '#ffd25e'); S.shake = 12; SFX.wave();
+      burst(B.x, B.y, '#ffd25e', 60, 320); floatText(B.x, B.y, t('queenKill', CFG.bossWaterReward), '#ffd25e'); S.shake = 12; SFX.wave(); haptic([40, 60, 120]);
       S.boss = null; return;
     }
-    burst(B.x, B.y, '#ffb84d', 18, 200); floatText(B.x, B.y - 36, (CFG.bossHp - B.hp) + ' / ' + CFG.bossHp, '#ffd25e'); S.shake = 6; SFX.royalHit();
+    burst(B.x, B.y, '#ffb84d', 18, 200); floatText(B.x, B.y - 36, (CFG.bossHp - B.hp) + ' / ' + CFG.bossHp, '#ffd25e'); S.shake = 6; SFX.royalHit(); haptic(40);
     f.vx = (f.x - B.x) / d * CFG.bossBounce; f.vy = (f.y - B.y) / d * CFG.bossBounce;
   } else if (f.dive <= 0 && d < reach && B.blockCd <= 0) {
     B.blockCd = CFG.bossBlockCd; floatText(B.x, B.y - 36, t('queenBlock'), '#ffffff');
     f.vx = (f.x - B.x) / d * CFG.bossBounce; f.vy = (f.y - B.y) / d * CFG.bossBounce;
   }
+}
+/* Sand scorpion: buried (harmless, can't be hit) then up (one touch kills). Each time it
+   burrows it moves scorpionStep closer; surfacing at the oasis edge stings the water. */
+function updateScorpions(dt, f, o) {
+  if (S.wave >= CFG.scorpionFromWave && !S.boss && S.scorpions.length < CFG.scorpionMax) {
+    S.scorpionT -= dt;
+    if (S.scorpionT <= 0) {
+      const a = grand(0, 6.28);
+      S.scorpions.push({ angle: a, ring: CFG.scorpionRingStart, x: o.x + Math.cos(a) * CFG.scorpionRingStart, y: o.y + Math.sin(a) * CFG.scorpionRingStart, up: false, t: CFG.scorpionBuried });
+      S.scorpionT = CFG.scorpionInterval * grand(0.8, 1.2);
+    }
+  }
+  const bonus = (f.dive > 0 ? 8 : 0) + RUN.catchBonus;
+  for (let i = S.scorpions.length - 1; i >= 0; i--) {
+    const Sc = S.scorpions[i]; Sc.t -= dt;
+    if (Sc.up && dist(Sc, f) < CFG.scorpionRadius + CFG.falconRadius + bonus) {
+      addScore(CFG.scorpionScore, Sc.x, Sc.y); S.stats.scorpionKills++;
+      burst(Sc.x, Sc.y, '#d9a24a', 22, 200); S.shake = 4; SFX.kill(S.combo); haptic(25);
+      S.scorpions.splice(i, 1); continue;
+    }
+    if (Sc.t > 0) continue;
+    if (Sc.up) {
+      Sc.up = false; Sc.t = CFG.scorpionBuried;
+      Sc.ring = Math.max(CFG.oasisRadius, Sc.ring - CFG.scorpionStep); Sc.angle += grand(-0.35, 0.35);
+      Sc.x = o.x + Math.cos(Sc.angle) * Sc.ring; Sc.y = o.y + Math.sin(Sc.angle) * Sc.ring;
+      burst(Sc.x, Sc.y, '#c9955a', 8, 80);
+    } else if (Sc.ring <= CFG.oasisRadius + 12) {
+      S.water = Math.max(0, S.water - CFG.scorpionDamage); burst(Sc.x, Sc.y, '#3fd1ff', 18, 150);
+      floatText(Sc.x, Sc.y, t('sting', CFG.scorpionDamage), '#7fdcff'); S.shake = 7; SFX.splash(); haptic(50);
+      S.scorpions.splice(i, 1);
+    } else {
+      Sc.up = true; Sc.t = CFG.scorpionUp; burst(Sc.x, Sc.y, '#e8c08a', 12, 120); SFX.royalHit();
+    }
+  }
+}
+function drawScorpion(Sc) {
+  const T = performance.now() / 1000;
+  if (!Sc.up) {
+    ctx.fillStyle = '#b9864a'; ctx.beginPath(); ctx.ellipse(Sc.x, Sc.y + 3, 15, 7, 0, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#d9a865'; ctx.beginPath(); ctx.ellipse(Sc.x, Sc.y, 11, 5, 0, 0, 6.28); ctx.fill();
+    const k = Math.min(1, Math.max(0, Sc.t / CFG.scorpionBuried));
+    ctx.strokeStyle = `rgba(217,166,102,${0.5 * (1 - k)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(Sc.x, Sc.y, 14 + 14 * k, 0, 6.28); ctx.stroke();
+    return;
+  }
+  const o = oasis();
+  ctx.save(); ctx.translate(Sc.x, Sc.y); ctx.rotate(Math.atan2(o.y - Sc.y, o.x - Sc.x));
+  ctx.strokeStyle = '#3a2414'; ctx.lineWidth = 2;
+  for (const s of [-1, 1]) {
+    for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-4 + k * 5, 0); ctx.lineTo(-6 + k * 6, s * 12); ctx.stroke(); }
+    ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(8, s * 4); ctx.lineTo(16, s * 9); ctx.stroke(); ctx.lineWidth = 2;
+    ctx.fillStyle = '#8a5a2b'; ctx.beginPath(); ctx.ellipse(18, s * 10, 4.5, 3, s * .5, 0, 6.28); ctx.fill();
+  }
+  ctx.fillStyle = '#8a5a2b'; ctx.beginPath(); ctx.ellipse(0, 0, 11, 6.5, 0, 0, 6.28); ctx.fill();
+  ctx.fillStyle = '#b07a3c'; ctx.beginPath(); ctx.ellipse(2, -1, 5, 2.5, 0, 0, 6.28); ctx.fill();
+  const b = Math.sin(T * 10) * 2;
+  ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-17, 2); ctx.lineTo(-21, -4 + b); ctx.lineTo(-18, -11 + b); ctx.lineTo(-11, -13 + b); ctx.stroke();
+  ctx.fillStyle = '#e04a2a'; ctx.beginPath(); ctx.arc(-11, -13 + b, 2.6, 0, 6.28); ctx.fill();
+  ctx.restore();
+  const left = Math.min(1, Math.max(0, Sc.t / CFG.scorpionUp));
+  ctx.strokeStyle = 'rgba(255,217,102,.8)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(Sc.x, Sc.y, 20, -Math.PI / 2, -Math.PI / 2 + 6.283 * left); ctx.stroke();
 }
 function drawBoss(t) {
   const B = S.boss; if (!B) return; const o = oasis();
@@ -690,6 +796,7 @@ function draw(t) {
   if (S) {
     drawOasis(t);
     S.dates.forEach(drawDate);
+    S.scorpions.forEach(drawScorpion);
     S.locusts.forEach(drawLocust);
     drawBoss(t);
     S.shields.forEach(drawShieldItem);
@@ -727,13 +834,18 @@ function frame(now) {
   draw(now / 1000);
   requestAnimationFrame(frame);
 }
-function start() {
+function start(daily = false) {
+  for (const k of Object.keys(BASE_CFG)) CFG[k] = JSON.parse(JSON.stringify(BASE_CFG[k]));
+  DAILY = daily ? dailyInfo() : null;
+  if (DAILY) { Object.assign(CFG, JSON.parse(JSON.stringify(DAILY.twist.cfg))); gameRandom = seededRandom(DAILY.seed); }
+  else gameRandom = () => Math.random();
+  document.body.classList.add('playing');
   logPlay('run'); SFX.init(); newGame(); SFX.music.start(); running = true;
   $('start').classList.add('hidden'); $('over').classList.add('hidden'); $('hud').classList.remove('hidden');
   if (matchMedia('(pointer:coarse)').matches) $('dive').style.display = 'flex';
 }
 function gameOver(title) {
-  running = false; SFX.over(); SFX.music.stop();
+  running = false; SFX.over(); SFX.music.stop(); document.body.classList.remove('playing');
   let top = []; try { top = JSON.parse(store.get('oasisFalconTop') || '[]'); } catch (e) {}
   top.push({ score: S.score, wave: S.wave }); top.sort((a, b) => b.score - a.score); top = top.slice(0, 5);
   store.set('oasisFalconTop', JSON.stringify(top));
@@ -743,19 +855,55 @@ function gameOver(title) {
   $('upgrade').classList.add('hidden');
   const before = unlockedSkins(totals); totals = mergeTotals(totals, S.stats); store.set('oasisFalconTotals', JSON.stringify(totals));
   const fresh = unlockedSkins(totals).filter(id => !before.includes(id));
-  lastRun = S.score > 0 ? { score: S.score, wave: S.wave, duration: Math.round(S.t * 10) / 10 } : null;
+  lastCard = { score: S.score, wave: S.wave, daily: DAILY ? DAILY.twist.id : null };
+  lastRun = S.score > 0 ? { score: S.score, wave: S.wave, duration: Math.round(S.t * 10) / 10, day: DAILY ? DAILY.day : null } : null;
+  $('boardOver').querySelector('h3').textContent = DAILY ? t('dailyBoard', t('tw_' + DAILY.twist.id)) : t('globalBoard');
+  if (DAILY) loadDailyBoard(); else loadBoards();
   $('submitBox').classList.toggle('hidden', !(lastRun && $('submitBox').dataset.online));
   $('submitBtn').disabled = false; $('submitMsg').textContent = ''; myRowId = null;
   $('unlocks').innerHTML = fresh.map(id => '<li>' + t('newSkin', skinText(id)[0]) + '</li>').join('');
   renderSkin();
-  $('overTitle').textContent = title;
+  $('overTitle').textContent = DAILY ? t('dailyTitle') + ' · ' + title : title;
   $('overScore').textContent = t('overScore', S.score, S.wave);
   $('overBest').textContent = t('best', best);
   $('over').classList.remove('hidden'); $('hud').classList.add('hidden'); $('shieldPill').classList.add('hidden'); $('dive').style.display = 'none';
 }
 $('mute').textContent = SFX.muted ? '🔇' : '🔊';
 $('mute').addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); SFX.init(); $('mute').textContent = SFX.toggle() ? '🔇' : '🔊'; });
-$('play').onclick = start; $('again').onclick = start;
+$('play').onclick = () => start(false); $('again').onclick = () => start(!!DAILY);
+$('dailyBtn').onclick = () => start(true);
+/* Share card: a 1080x1920 picture of the run for stories and statuses. Uses the
+   system share sheet when the browser can share files, else downloads the PNG. */
+let lastCard = null;
+function makeShareCard(run) {
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const g = c.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, 1920); sky.addColorStop(0, '#f6b26b'); sky.addColorStop(.55, '#e2725b'); sky.addColorStop(1, '#2c2a4a');
+  g.fillStyle = sky; g.fillRect(0, 0, 1080, 1920);
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(540, 1080, 330, 110, 0, 0, 6.28); g.fill();
+  g.fillStyle = '#2f9be0'; g.beginPath(); g.ellipse(540, 1070, 250, 80, 0, 0, 6.28); g.fill();
+  if (falconImgs[0].complete) { g.save(); g.translate(540, 760); g.rotate(-0.35); g.drawImage(tinted(falconImgs[0], skin), -260, -260, 520, 520); g.restore(); }
+  g.textAlign = 'center'; g.direction = LANG === 'ar' ? 'rtl' : 'ltr';
+  const txt = (s, y, size, color, shadow = '#8a3b12') => { g.font = `800 ${size}px Tahoma, sans-serif`; g.fillStyle = shadow; g.fillText(s, 540, y + size * 0.08); g.fillStyle = color; g.fillText(s, 540, y); };
+  txt(t('title'), 300, 140, '#ffd25e');
+  if (run.daily) txt(t('dailyTitle') + ' · ' + t('tw_' + run.daily), 410, 56, '#9fe8ff', '#10202a');
+  g.direction = 'ltr'; txt(String(run.score), 1360, 220, '#ffffff', '#00000088');
+  g.direction = LANG === 'ar' ? 'rtl' : 'ltr'; txt(t('wave', run.wave), 1470, 70, '#ffd25e', '#00000088');
+  txt(t('shareBeat'), 1640, 60, '#ffffff', '#00000088');
+  g.direction = 'ltr'; txt('tokyo503.github.io/oasis-falcon', 1760, 52, '#ffd25e', '#00000088');
+  return c;
+}
+async function shareCard() {
+  if (!lastCard) return;
+  const c = makeShareCard(lastCard);
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  const file = new File([blob], 'oasis-falcon-' + lastCard.score + '.png', { type: 'image/png' });
+  const text = t('shareText', lastCard.score) + ' https://tokyo503.github.io/oasis-falcon/';
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text }); return 'shared'; } } catch (e) { if (e.name === 'AbortError') return 'cancelled'; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000); return 'downloaded';
+}
+$('shareBtn').onclick = shareCard;
+function renderDailyBtn() { const d = dailyInfo(); $('dailyBtn').textContent = t('daily', t('tw_' + d.twist.id)); }
 function loadSkins() {
   try { totals = JSON.parse(store.get('oasisFalconTotals') || '{}'); } catch (e) { totals = {}; }
   skin = store.get('oasisFalconSkin') || 'classic';
@@ -791,6 +939,12 @@ async function loadBoards() {
     return true;
   } catch (e) { return false; }
 }
+async function loadDailyBoard() {
+  try {
+    const rows = await boardFetch('/rest/v1/scores?select=id,name,score,wave&day=eq.' + dailyInfo().day + '&order=score.desc,created_at.asc&limit=10');
+    renderBoard($('boardOver'), rows); return true;
+  } catch (e) { return false; }
+}
 const SUBMIT_ERRORS = { 'too many submissions': 'errRate', 'invalid name': 'errName', 'name not allowed': 'errBlocked' };
 async function submitScore() {
   const name = $('playerName').value.trim();
@@ -799,10 +953,11 @@ async function submitScore() {
   $('submitBtn').disabled = true; $('submitMsg').textContent = t('sending');
   try {
     myRowId = await boardFetch('/rest/v1/rpc/submit_score', { method: 'POST',
-      body: JSON.stringify({ p_name: name, p_score: lastRun.score, p_wave: lastRun.wave, p_duration: lastRun.duration }) });
-    lastRun = null;
-    const better = await boardFetch('/rest/v1/scores?select=id&score=gt.' + (await boardFetch('/rest/v1/scores?select=score&id=eq.' + myRowId))[0].score);
-    await loadBoards();  // refresh first, so the highlighted row is already there when the message appears
+      body: JSON.stringify({ p_name: name, p_score: lastRun.score, p_wave: lastRun.wave, p_duration: lastRun.duration, ...(lastRun.day ? { p_day: lastRun.day } : {}) }) });
+    const dayRun = lastRun.day; lastRun = null;
+    const myScore = (await boardFetch('/rest/v1/scores?select=score&id=eq.' + myRowId))[0].score;
+    const better = await boardFetch('/rest/v1/scores?select=id&score=gt.' + myScore + (dayRun ? '&day=eq.' + dayRun : ''));
+    await loadBoards(); if (dayRun) await loadDailyBoard();  // refresh first, so the highlighted row is already there when the message appears
     $('submitMsg').textContent = t('sent', better.length + 1);
   } catch (e) {
     $('submitMsg').textContent = t(SUBMIT_ERRORS[e.message] || 'sendFail');
@@ -839,7 +994,7 @@ function applyLang(lang) {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   document.querySelectorAll('[data-i18n-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nLabel)); });
-  renderSkin(); renderBest0(); if (S) $('wave').textContent = t('wave', S.wave);
+  renderSkin(); renderBest0(); renderDailyBtn(); if (S) $('wave').textContent = t('wave', S.wave);
 }
 $('langBtn').addEventListener('click', () => applyLang(LANG === 'ar' ? 'en' : 'ar'));
 const best0 = store.get('oasisFalconBest'); const renderBest0 = () => { if (best0) $('bestStart').textContent = t('best', best0); }; renderBest0();
