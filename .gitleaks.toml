@@ -1,0 +1,19 @@
+# gitleaks (MIT, github.com/gitleaks/gitleaks) — default rules plus an allowlist for values that are public on purpose.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public by design: Supabase publishable key (RLS-limited), fleet ops_state key names (t2-*), Airtable record ids"
+regexTarget = "line"
+regexes = [
+  '''sb_publishable_''',
+  '''state_key''',
+  '''"keyValue": "t2-''',
+  '''KEY = "t2-''',
+  '''airtable_id''',
+  '''idempotency_key''',
+]
+
+[[allowlists]]
+description = "Exported n8n workflows (n8n cancelled 2026-10-06): filter values, no credentials"
+paths = ['''backups/n8n/''']

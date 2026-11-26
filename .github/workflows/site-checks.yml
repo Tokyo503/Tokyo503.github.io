@@ -1,0 +1,44 @@
+name: site-checks
+
+# Before a merge goes live on GitHub Pages:
+# - lychee (Apache-2.0/MIT, lycheeverse/lychee-action): every relative href/src points to a file that exists
+#   (CLAUDE.md rule 3 and the "before merging" checklist). Blocking.
+# - Lighthouse CI (Apache-2.0, treosh/lighthouse-ci-action): performance / accessibility / SEO scores of the home
+#   page and the game. Report only: scores go to the job summary and an artifact, nothing is uploaded to a public server.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - name: Local links (lychee, offline)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --offline --no-progress --root-dir ${{ github.workspace }} './**/*.html'
+          fail: true
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - name: Lighthouse (home + game)
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
+        with:
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: false
