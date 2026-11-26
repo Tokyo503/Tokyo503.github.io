@@ -1,0 +1,9 @@
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": ".",
+      "url": ["http://localhost/index.html", "http://localhost/oasis-falcon/index.html"],
+      "numberOfRuns": 1
+    }
+  }
+}
